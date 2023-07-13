@@ -4,9 +4,14 @@
 dt=$(date '+%Y%m%d_%H%M%S')
 cwd=$(pwd)
 
+# DFM 37UX178-ML: Dimensions at 60 fps: 1920,1080 / 2048,2048 / 3072,2048
+width=3072
+height=2048
+fps=60
+
 launch_pipe=(
 	"gst-launch-1.0 tcambin tcam-properties=tcam,ExposureAuto=On,serial=46810510"
-	" ! video/x-raw,format=BGRx,framerate=60/1,width=1920,height=1080 ! timeoverlay "
+	" ! video/x-raw,format=BGRx,framerate=$fps/1,width=$width,height=$height ! timeoverlay "
 )
 launch_pipe=${launch_pipe[*]}
 
