@@ -1,6 +1,8 @@
 #! /bin/bash
 
 
+source $HOME/scratch/tiscamera/build/env.sh
+
 dt=$(date '+%Y%m%d_%H%M%S')
 cwd=$(pwd)
 
@@ -30,7 +32,15 @@ both() {
 	pipeline="$launch_pipe ! tee name=t t. ! queue ! $display_pipe t. ! queue ! $save_pipe"
 }
 
+print_usage() {
+	echo ""
+	echo "USAGE----------------------"
+	echo "Display: ./launch_gst.sh -d"
+	echo "Record : ./launch_gst.sh -r"
+	echo ""
+}
 
+no_args="true"
 while getopts "rdb" flag; do
   case ${flag} in
     r) record
@@ -42,7 +52,10 @@ while getopts "rdb" flag; do
     *) print_usage
       exit 1 ;;
   esac
+  no_args="false"
 done
+
+[[ $no_args == "true" ]] && { print_usage; exit 1; }
 
 echo $pipeline
 $pipeline
