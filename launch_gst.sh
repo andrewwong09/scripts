@@ -12,13 +12,14 @@ height=2048
 fps=60
 
 launch_pipe=(
-	"gst-launch-1.0 tcambin tcam-properties=tcam,ExposureAuto=On,serial=46810510"
-	" ! video/x-raw,format=BGRx,framerate=$fps/1,width=$width,height=$height ! timeoverlay "
+	"gst-launch-1.0 tcambin tcam-properties=tcam,ExposureAuto=Off,serial=46810510"
+	" ! video/x-raw,format=BGRx,framerate=$fps/1,width=$width,height=$height ! timeoverlay"
 )
 launch_pipe=${launch_pipe[*]}
 
 display_pipe="videoconvert ! autovideosink"
 save_pipe="videoconvert ! x265enc ! h265parse ! matroskamux ! filesink location=$cwd/$dt.mkv"
+images_pipe="videoconvert ! jpegenc ! multifilesink location=$dt/frame%06d.jpg"
 
 record() {
 	pipeline="$launch_pipe ! $save_pipe"
@@ -26,6 +27,11 @@ record() {
 
 display() {
 	pipeline="$launch_pipe ! $display_pipe"
+}
+
+images() {
+	mkdir $dt
+	pipeline="$launch_pipe ! $images_pipe"
 }
 
 both() {
@@ -37,15 +43,18 @@ print_usage() {
 	echo "USAGE----------------------"
 	echo "Display: ./launch_gst.sh -d"
 	echo "Record : ./launch_gst.sh -r"
+	echo "images : ./launch_gst.sh -i"
 	echo ""
 }
 
 no_args="true"
-while getopts "rdb" flag; do
+while getopts "rdib" flag; do
   case ${flag} in
     r) record
 	;;
     d) display
+	;;
+    i) images
 	;;
     b) both
 	;;
