@@ -5,6 +5,7 @@
 #include <stdio.h>
 
 #include <opencv2/core.hpp>
+#include "opencv2/opencv.hpp"
 #include <opencv2/videoio.hpp>
 #include <opencv2/highgui.hpp>
 using namespace cv;
@@ -12,10 +13,11 @@ using namespace std;
 using namespace std::chrono;
 
 void cap_read(Mat* frame, int* count, bool* stop) {
-	const char* gst_launch_str = "tcambin tcam-properties=tcam,ExposureAuto=Off,serial=46810510,ExposureTime=10000"
+	const char* gst_launch_str = "tcambin tcam-properties=tcam,ExposureAuto=Off,GainAuto=Off,"
+				     "serial=46810510,ExposureTime=10000,Gain=10"
 				     " ! video/x-raw,format=BGRx,width=3072,height=2048,framerate=60/1"
 				     " ! appsink";
-	VideoCapture cap(gst_launch_str, CAP_GSTREAMER);
+	cv::VideoCapture cap(gst_launch_str, CAP_GSTREAMER);
 
 	if (!cap.isOpened()) {
 		cerr << "ERROR! Unable to open camera\n";
@@ -33,12 +35,16 @@ void cap_read(Mat* frame, int* count, bool* stop) {
 
 void display(Mat* frame, int* count, bool* stop) {
 	int local_count = 0;
-	namedWindow("Display", WINDOW_AUTOSIZE);
+	cv::Mat resized_display_img;
+	
+	cv::namedWindow("Display", WINDOW_AUTOSIZE);
 	while(!*stop) {
 		if (local_count != *count) {
 			local_count = *count;
-			imshow("Display", *frame);
-			if (waitKey(30) == 27) {
+			cv::resize(*frame, resized_display_img, Size(768, 512), cv::INTER_LINEAR);
+			cv::imshow("Display", resized_display_img);
+			if (cv::waitKey(30) == 27) {
+				*stop = true;
 				break;
 			}	
 		}
@@ -76,6 +82,9 @@ int main(int, char**) {
 			start = stop;
 		} else {
 			i--;
+		}
+		if (stop) {
+			break;
 		}
 	}
 	stop = true;
