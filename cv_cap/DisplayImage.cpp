@@ -73,7 +73,6 @@ int main(int, char**) {
 			auto stop = high_resolution_clock::now();
 			auto duration = duration_cast<microseconds>(stop - start);
 			if (i % fps_window == 0) {
-				printf("Enter \n");
 				auto total_duration = duration_cast<microseconds>(stop - beginning);
 				fps = (float) fps_window / total_duration.count() * 1e6;
 				beginning = stop;
