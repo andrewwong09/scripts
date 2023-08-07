@@ -55,24 +55,20 @@ void display(Mat* frame, int* count, bool* stop) {
 }
 
 
-int read_config() {
-	FILE *file;
-	YAML::Node config = YAML::LoadFile("config.yaml");
-	if (config["hello"]) {
-		std::cout << "YAML Test: " << config["hello"] << "\n";
-	}
-	return 0;
-}
-
 int main(int, char**) {
-	read_config();
-
 	Mat frame;
 	int shared_count = 0;
 	int count = 0;
 	bool stop = false;
+	YAML::Node config = YAML::LoadFile("config.yaml");
+	std::vector<std::thread> threads;
 	std::thread t1 (cap_read, &frame, &shared_count, &stop);
-	//std::thread t2 (display, &frame, &shared_count, &stop);
+	threads.push_back(move(t1));
+	if (config["Display"].as<bool>()) {
+		cout << "Display Video" << endl;
+		std::thread t2 (display, &frame, &shared_count, &stop);
+		threads.push_back(move(t2));
+	}
 	char img_name_buffer[100];
 	auto start = high_resolution_clock::now();
 	auto beginning = high_resolution_clock::now();
@@ -101,7 +97,8 @@ int main(int, char**) {
 		}
 	}
 	stop = true;
-	t1.join();
-	//t2.join();
+	for (auto &th : threads) {
+		th.join();
+	}
 	return 0;
 }
