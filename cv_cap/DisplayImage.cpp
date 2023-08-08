@@ -14,11 +14,16 @@ using namespace cv;
 using namespace std;
 using namespace std::chrono;
 
-void cap_read(Mat* frame, int* count, bool* stop) {
-	const char* gst_launch_str = "tcambin tcam-properties=tcam,ExposureAuto=Off,GainAuto=Off,"
-		"serial=46810510,ExposureTime=10000,Gain=20"
-		" ! video/x-raw,format=BGRx,width=3072,height=2048,framerate=60/1"
-		" ! appsink";
+void cap_read(Mat* frame, int* count, bool* stop, int e_time, int width, 
+		int height, int gain, int serial_num, int framerate) {
+	char gst_launch_str[500];
+	sprintf(gst_launch_str,
+		"tcambin tcam-properties=tcam,ExposureAuto=Off,GainAuto=Off,"
+		"serial=%d,ExposureTime=%d,Gain=%d"
+		" ! video/x-raw,format=BGRx,width=%d,height=%d,framerate=%d/1"
+		" ! appsink", serial_num, e_time, gain, width, height, framerate
+		);
+	printf("%s\n", gst_launch_str);
 	cv::VideoCapture cap(gst_launch_str, CAP_GSTREAMER);
 
 	if (!cap.isOpened()) {
@@ -62,7 +67,17 @@ int main(int, char**) {
 	bool stop = false;
 	YAML::Node config = YAML::LoadFile("config.yaml");
 	std::vector<std::thread> threads;
-	std::thread t1 (cap_read, &frame, &shared_count, &stop);
+	std::thread t1 (cap_read,
+			&frame, 
+			&shared_count,
+			&stop,
+			config["ExposureTime_us"].as<int>(),
+			config["width"].as<int>(),
+			config["height"].as<int>(),
+			config["gain"].as<int>(),
+			config["serial_num"].as<int>(),
+			config["framerate"].as<int>()
+			);
 	threads.push_back(move(t1));
 	if (config["Display"].as<bool>()) {
 		cout << "Display Video" << endl;
