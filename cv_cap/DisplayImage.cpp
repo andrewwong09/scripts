@@ -21,7 +21,7 @@ void cap_read(Mat* frame, int* count, bool* stop, int e_time, int width,
 		"tcambin tcam-properties=tcam,ExposureAuto=Off,GainAuto=Off,"
 		"serial=%d,ExposureTime=%d,Gain=%d"
 		" ! video/x-raw,format=BGRx,width=%d,height=%d,framerate=%d/1"
-		" ! appsink", serial_num, e_time, gain, width, height, framerate
+		" ! timeoverlay ! appsink", serial_num, e_time, gain, width, height, framerate
 		);
 	printf("%s\n", gst_launch_str);
 	cv::VideoCapture cap(gst_launch_str, CAP_GSTREAMER);
@@ -40,7 +40,7 @@ void cap_read(Mat* frame, int* count, bool* stop, int e_time, int width,
 	}
 }
 
-void display(Mat* frame, int* count, bool* stop) {
+void display(Mat* frame, int* count, bool* stop, int width, int height) {
 	int local_count = 0;
 	cv::Mat resized_display_img;
 
@@ -48,7 +48,7 @@ void display(Mat* frame, int* count, bool* stop) {
 	while(!*stop) {
 		if (local_count != *count) {
 			local_count = *count;
-			cv::resize(*frame, resized_display_img, Size(768, 512), cv::INTER_LINEAR);
+			cv::resize(*frame, resized_display_img, Size(width, height), cv::INTER_LINEAR);
 			cv::imshow("Display", resized_display_img);
 			if (cv::waitKey(30) == 27) {
 				*stop = true;
@@ -79,9 +79,15 @@ int main(int, char**) {
 			config["framerate"].as<int>()
 			);
 	threads.push_back(move(t1));
-	if (config["Display"].as<bool>()) {
+	if (config["display"].as<bool>()) {
 		cout << "Display Video" << endl;
-		std::thread t2 (display, &frame, &shared_count, &stop);
+		int scale = config["display_down_scale"].as<int>();
+		std::thread t2 (display,
+				&frame,
+				&shared_count,
+				&stop,
+				(int) config["width"].as<int>() / scale,
+				(int) config["height"].as<int>() / scale);
 		threads.push_back(move(t2));
 	}
 	char img_name_buffer[100];

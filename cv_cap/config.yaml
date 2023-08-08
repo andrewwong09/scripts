@@ -1,7 +1,8 @@
-Display: true
+display: true
+display_down_scale: 3
 width: 3072
 height: 2048
-gain: 30
+gain: 20
 serial_num: 46810510
 framerate: 60
 ExposureTime_us: 10000
