@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <iostream>
 #include <stdio.h>
+#include <signal.h>
 #include <assert.h>
 #include "yaml-cpp/yaml.h"
 
@@ -13,6 +14,9 @@
 using namespace cv;
 using namespace std;
 using namespace std::chrono;
+
+
+bool stop = false;
 
 void cap_read(Mat* frame, int* count, bool* stop, int e_time, int width, 
 		int height, int gain, int serial_num, int framerate) {
@@ -59,13 +63,17 @@ void display(Mat* frame, int* count, bool* stop, int width, int height) {
 	}
 }
 
+void my_handler(int s){
+	printf("\nCaught signal %d\n", s);
+	stop = true;
+}
 
 int main(int, char**) {
 	Mat frame;
 	int shared_count = 0;
 	int count = 0;
-	bool stop = false;
 	YAML::Node config = YAML::LoadFile("config.yaml");
+	signal (SIGINT, my_handler);
 	std::vector<std::thread> threads;
 	std::thread t1 (cap_read,
 			&frame, 
