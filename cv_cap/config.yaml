@@ -6,3 +6,4 @@ gain: 20
 serial_num: 46810510
 framerate: 60
 ExposureTime_us: 10000
+detect: true

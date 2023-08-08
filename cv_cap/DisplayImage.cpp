@@ -63,6 +63,19 @@ void display(Mat* frame, int* count, bool* stop, int width, int height) {
 	}
 }
 
+void detect(Mat* frame, int* count, bool* stop, int* detect_x, int* detect_y) {
+	int local_count = 0;
+	while(!*stop) {
+		if (local_count < *count - 30) {
+			local_count = *count;
+			// Detect red helmet
+			*detect_x = *detect_x + 1;
+			*detect_y = *detect_y + 1;
+		}
+
+	}
+}
+
 void my_handler(int s){
 	printf("\nCaught signal %d\n", s);
 	stop = true;
@@ -72,6 +85,8 @@ int main(int, char**) {
 	Mat frame;
 	int shared_count = 0;
 	int count = 0;
+	int detect_x = 0;
+	int detect_y = 42;
 	YAML::Node config = YAML::LoadFile("config.yaml");
 	signal (SIGINT, my_handler);
 	std::vector<std::thread> threads;
@@ -98,6 +113,16 @@ int main(int, char**) {
 				(int) config["height"].as<int>() / scale);
 		threads.push_back(move(t2));
 	}
+	if (config["detect"].as<bool>()) {
+		std::thread t3 (detect,
+				&frame,
+				&shared_count,
+				&stop,
+				&detect_x,
+				&detect_y);
+		threads.push_back(move(t3));
+	}
+
 	char img_name_buffer[100];
 	auto start = high_resolution_clock::now();
 	auto beginning = high_resolution_clock::now();
@@ -116,7 +141,7 @@ int main(int, char**) {
 				fps = (float) fps_window / total_duration.count() * 1e6;
 				beginning = stop;
 			}
-			cout << i << ": " << duration.count() << " μS / " << fps << " fps" << endl;
+			cout << i << ": " << duration.count() << " μS / " << fps << " fps, " << detect_x << ", " << detect_y << endl;
 			start = stop;
 		} else {
 			i--;
