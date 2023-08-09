@@ -134,7 +134,8 @@ int main(int, char**) {
 	float fps = 0;
 	int fps_window = 5;
 	cv::Mat temp_write;
-	for (int i=0; i < 60 * 60 * 60 * 2; i++) {
+	// two hour recording
+	for (int i=0; i < config["framerate"].as<int>() * 60 * 60 * 2; i++) {
 		if (count != shared_count) {
 			count = shared_count;
 			cv::cvtColor(frame, temp_write, cv::COLOR_BGRA2BGR);
@@ -160,6 +161,6 @@ int main(int, char**) {
 		th.join();
 	}
 	video.release();
-	printf("Main: Released");
+	printf("Main: Video Released\n");
 	return 0;
 }
