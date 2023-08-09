@@ -123,27 +123,22 @@ int main(int, char**) {
 				&detect_y);
 		threads.push_back(move(t3));
 	}
-	int codec = cv::VideoWriter::fourcc('M', 'J', 'P', 'G');
-	cv::VideoWriter video;
-	video.open("output.avi", codec, 60.0, cv::Size(3072, 2048), true);
-	if (video.isOpened()) {
-		printf("I am opened\n");
-	}
+	cv::VideoWriter video(config["video_filepath"].as<std::string>(),
+			cv::VideoWriter::fourcc('a', 'v', 'c', '1'),
+			config["framerate"].as<double>(),
+			cv::Size(config["width"].as<int>(), config["height"].as<int>()),
+			true);
 	auto start = high_resolution_clock::now();
 	auto beginning = high_resolution_clock::now();
 	cout << setprecision(2) << fixed;
 	float fps = 0;
 	int fps_window = 5;
-	for (int i=0; i < 200; i++) {
+	cv::Mat temp_write;
+	for (int i=0; i < 60 * 60 * 60 * 2; i++) {
 		if (count != shared_count) {
 			count = shared_count;
-			printf("%d", frame.type());
-			cout << frame << endl;
-			cv::Mat temp;
-			cv::cvtColor(frame, temp, cv::COLOR_BGRA2BGR);
-			video.write(temp);
-			cout << "Width : " << frame.size().width << endl;
-			cout << "Height: " << frame.size().height << endl;
+			cv::cvtColor(frame, temp_write, cv::COLOR_BGRA2BGR);
+			video.write(temp_write);
 			auto stop = high_resolution_clock::now();
 			auto duration = duration_cast<microseconds>(stop - start);
 			if (i % fps_window == 0) {
@@ -165,5 +160,6 @@ int main(int, char**) {
 		th.join();
 	}
 	video.release();
+	printf("Main: Released");
 	return 0;
 }
