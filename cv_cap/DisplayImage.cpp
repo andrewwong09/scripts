@@ -125,7 +125,7 @@ int main(int, char**) {
 	}
 	cv::VideoWriter video(config["video_filepath"].as<std::string>(),
 			cv::VideoWriter::fourcc('a', 'v', 'c', '1'),
-			config["framerate"].as<double>(),
+			config["emperical_framerate"].as<double>(),
 			cv::Size(config["width"].as<int>(), config["height"].as<int>()),
 			true);
 	auto start = high_resolution_clock::now();
