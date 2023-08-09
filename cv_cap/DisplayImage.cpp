@@ -42,6 +42,7 @@ void cap_read(Mat* frame, int* count, bool* stop, int e_time, int width,
 			*count = *count + 1;
 		}
 	}
+	cap.release();
 }
 
 void display(Mat* frame, int* count, bool* stop, int width, int height) {
@@ -66,7 +67,7 @@ void display(Mat* frame, int* count, bool* stop, int width, int height) {
 void detect(Mat* frame, int* count, bool* stop, int* detect_x, int* detect_y) {
 	int local_count = 0;
 	while(!*stop) {
-		if (local_count < *count - 30) {
+		if (local_count < *count - 10) {
 			local_count = *count;
 			// Detect red helmet
 			*detect_x = *detect_x + 1;
@@ -122,8 +123,12 @@ int main(int, char**) {
 				&detect_y);
 		threads.push_back(move(t3));
 	}
-
-	char img_name_buffer[100];
+	int codec = cv::VideoWriter::fourcc('M', 'J', 'P', 'G');
+	cv::VideoWriter video;
+	video.open("output.avi", codec, 60.0, cv::Size(3072, 2048), true);
+	if (video.isOpened()) {
+		printf("I am opened\n");
+	}
 	auto start = high_resolution_clock::now();
 	auto beginning = high_resolution_clock::now();
 	cout << setprecision(2) << fixed;
@@ -132,8 +137,13 @@ int main(int, char**) {
 	for (int i=0; i < 200; i++) {
 		if (count != shared_count) {
 			count = shared_count;
-			sprintf(img_name_buffer, "./display_img%03d_%03d.jpeg", i, count);
-			imwrite(img_name_buffer, frame);
+			printf("%d", frame.type());
+			cout << frame << endl;
+			cv::Mat temp;
+			cv::cvtColor(frame, temp, cv::COLOR_BGRA2BGR);
+			video.write(temp);
+			cout << "Width : " << frame.size().width << endl;
+			cout << "Height: " << frame.size().height << endl;
 			auto stop = high_resolution_clock::now();
 			auto duration = duration_cast<microseconds>(stop - start);
 			if (i % fps_window == 0) {
@@ -154,5 +164,6 @@ int main(int, char**) {
 	for (auto &th : threads) {
 		th.join();
 	}
+	video.release();
 	return 0;
 }

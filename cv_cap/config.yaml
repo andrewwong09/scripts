@@ -1,4 +1,4 @@
-display: true
+display: false
 display_down_scale: 3
 width: 3072
 height: 2048
@@ -7,3 +7,4 @@ serial_num: 46810510
 framerate: 60
 ExposureTime_us: 10000
 detect: true
+video_filepath: "./output.mp4"
