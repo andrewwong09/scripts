@@ -64,14 +64,23 @@ void display(Mat* frame, int* count, bool* stop, int width, int height) {
 	}
 }
 
-void detect(Mat* frame, int* count, bool* stop, int* detect_x, int* detect_y) {
+void detect(Mat* frame, int* count, bool* stop, int* x, int* y) {
+	cv::Mat hsv_img, mask1, mask2, mask3;
+	vector<vector<Point> > contours;
+	vector<Vec4i> hierarchy;
 	int local_count = 0;
 	while(!*stop) {
 		if (local_count < *count - 10) {
 			local_count = *count;
+			cv::cvtColor(*frame, hsv_img, cv::COLOR_BGR2HSV);
+			// Gen lower mask (0-5) and upper mask (175-180) of RED
+			cv::inRange(hsv_img, cv::Scalar(0, 100, 60), cv::Scalar(35, 255, 255), mask1);
+			cv::inRange(hsv_img, cv::Scalar(170, 100, 60), cv::Scalar(180, 255, 255), mask2);
+			cv::bitwise_or(mask1, mask2, mask3);
+			cv::findContours(mask3, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_NONE);
 			// Detect red helmet
-			*detect_x = *detect_x + 1;
-			*detect_y = *detect_y + 1;
+			*x = *x + 1;
+			*y = *y + 1;
 		}
 
 	}
