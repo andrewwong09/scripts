@@ -3,6 +3,14 @@ Good Source: https://www.geeksforgeeks.org/how-to-install-opencv-in-c-on-linux/
 
 ```
 sudo apt install libopencv-dev
+
+git clone https://github.com/jbeder/yaml-cpp
+cd yaml-cpp
+mkdir build
+cd build
+cmake ..
+sudo make install
+
 cmake .
 make
 ./DisplayImage

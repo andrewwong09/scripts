@@ -3,9 +3,11 @@ display_down_scale: 3
 width: 3072
 height: 2048
 gain: 20
-serial_num: 46810510
+serial_num: 33120263
 framerate: 60
-emperical_framerate: 27
+emperical_framerate: 15
 ExposureTime_us: 10000
 detect: true
+min_area: 2000
+max_area: 3000
 video_filepath: "./output.mp4"

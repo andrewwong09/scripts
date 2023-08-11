@@ -22,11 +22,11 @@ void cap_read(Mat* frame, int* count, bool* stop, int e_time, int width,
 		int height, int gain, int serial_num, int framerate) {
 	char gst_launch_str[500];
 	sprintf(gst_launch_str,
-		"tcambin tcam-properties=tcam,ExposureAuto=Off,GainAuto=Off,"
-		"serial=%d,ExposureTime=%d,Gain=%d"
-		" ! video/x-raw,format=BGRx,width=%d,height=%d,framerate=%d/1"
-		" ! timeoverlay ! appsink", serial_num, e_time, gain, width, height, framerate
-		);
+			"tcambin tcam-properties=tcam,ExposureAuto=Off,GainAuto=Off,"
+			"serial=%d,ExposureTime=%d,Gain=%d"
+			" ! video/x-raw,format=BGRx,width=%d,height=%d,framerate=%d/1"
+			" ! timeoverlay ! appsink", serial_num, e_time, gain, width, height, framerate
+	       );
 	printf("%s\n", gst_launch_str);
 	cv::VideoCapture cap(gst_launch_str, CAP_GSTREAMER);
 
@@ -64,12 +64,15 @@ void display(Mat* frame, int* count, bool* stop, int width, int height) {
 	}
 }
 
-void detect(Mat* frame, int* count, bool* stop, int* x, int* y) {
+void detect(Mat* frame, int* count, bool* stop, int* x, int* y, int min_area, int max_area) {
 	cv::Mat hsv_img, mask1, mask2, mask3;
 	vector<vector<Point> > contours;
 	vector<Vec4i> hierarchy;
 	int local_count = 0;
 	while(!*stop) {
+		int x_total = 0;
+		int y_total = 0;
+		int object_count = 0;
 		if (local_count < *count - 10) {
 			local_count = *count;
 			cv::cvtColor(*frame, hsv_img, cv::COLOR_BGR2HSV);
@@ -78,9 +81,26 @@ void detect(Mat* frame, int* count, bool* stop, int* x, int* y) {
 			cv::inRange(hsv_img, cv::Scalar(170, 100, 60), cv::Scalar(180, 255, 255), mask2);
 			cv::bitwise_or(mask1, mask2, mask3);
 			cv::findContours(mask3, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_NONE);
-			// Detect red helmet
-			*x = *x + 1;
-			*y = *y + 1;
+			vector<cv::Moments> mu(contours.size());
+			for(size_t i=0; i < contours.size(); i++) {
+				mu[i] = moments( contours[i] );
+			}
+			for (auto m : mu) {
+				if ( (m.m00 > min_area) & (m.m00 < max_area)) {
+					object_count += 1;
+					int cx = (int) (m.m10 / m.m00);
+					int cy = (int) (m.m01 / m.m00);
+					x_total += cx;
+					y_total += cy;
+				}	
+			}
+			if (object_count > 0) {
+				*x = (int) (x_total / object_count);
+				*y = (int) (y_total / object_count);
+			} else {
+				*x = -1;
+				*y = -1;
+			}
 		}
 
 	}
@@ -110,7 +130,7 @@ int main(int, char**) {
 			config["gain"].as<int>(),
 			config["serial_num"].as<int>(),
 			config["framerate"].as<int>()
-			);
+		       );
 	threads.push_back(move(t1));
 	if (config["display"].as<bool>()) {
 		cout << "Display Video" << endl;
@@ -129,7 +149,9 @@ int main(int, char**) {
 				&shared_count,
 				&stop,
 				&detect_x,
-				&detect_y);
+				&detect_y,
+				config["min_area"].as<int>(),
+				config["max_area"].as<int>());
 		threads.push_back(move(t3));
 	}
 	cv::VideoWriter video(config["video_filepath"].as<std::string>(),
