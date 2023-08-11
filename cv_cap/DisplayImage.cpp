@@ -45,7 +45,7 @@ void cap_read(Mat* frame, int* count, bool* stop, int e_time, int width,
 	cap.release();
 }
 
-void display(Mat* frame, int* count, bool* stop, int width, int height) {
+void display(Mat* frame, int* count, bool* stop, int width, int height, vector<vector<Point>>* contours) {
 	int local_count = 0;
 	cv::Mat resized_display_img;
 
@@ -58,7 +58,8 @@ void display(Mat* frame, int* count, bool* stop, int width, int height) {
 			if (cv::waitKey(30) == 27) {
 				*stop = true;
 				break;
-			}	
+			}
+			cout << "Display thread: " << contours->size() << endl;
 		}
 
 	}
@@ -66,7 +67,6 @@ void display(Mat* frame, int* count, bool* stop, int width, int height) {
 
 void detect(Mat* frame, int* count, bool* stop, int* x, int* y, int min_area, int max_area) {
 	cv::Mat hsv_img, mask1, mask2, mask3;
-	vector<vector<Point> > contours;
 	vector<Vec4i> hierarchy;
 	int local_count = 0;
 	while(!*stop) {
@@ -75,6 +75,7 @@ void detect(Mat* frame, int* count, bool* stop, int* x, int* y, int min_area, in
 		int object_count = 0;
 		if (local_count < *count - 10) {
 			local_count = *count;
+			vector<vector<Point>> contours;
 			cv::cvtColor(*frame, hsv_img, cv::COLOR_BGR2HSV);
 			// Gen lower mask (0-5) and upper mask (175-180) of RED
 			cv::inRange(hsv_img, cv::Scalar(0, 100, 60), cv::Scalar(35, 255, 255), mask1);
@@ -117,6 +118,7 @@ int main(int, char**) {
 	int count = 0;
 	int detect_x = 0;
 	int detect_y = 42;
+	vector<vector<Point>> contours;
 	YAML::Node config = YAML::LoadFile("config.yaml");
 	signal (SIGINT, my_handler);
 	std::vector<std::thread> threads;
@@ -140,7 +142,8 @@ int main(int, char**) {
 				&shared_count,
 				&stop,
 				(int) config["width"].as<int>() / scale,
-				(int) config["height"].as<int>() / scale);
+				(int) config["height"].as<int>() / scale,
+				&contours);
 		threads.push_back(move(t2));
 	}
 	if (config["detect"].as<bool>()) {
