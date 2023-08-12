@@ -47,25 +47,26 @@ void cap_read(Mat* frame, int* count, bool* stop, int e_time, int width,
 
 void display(Mat* frame, int* count, bool* stop, int width, int height, vector<vector<Point>>* contours) {
 	int local_count = 0;
-	cv::Mat resized_display_img;
 
 	cv::namedWindow("Display", WINDOW_AUTOSIZE);
 	while(!*stop) {
 		if (local_count != *count) {
+			cv::Mat display_img = frame->clone();
+			cv::Mat resized_display_img;
 			local_count = *count;
-			cv::resize(*frame, resized_display_img, Size(width, height), cv::INTER_LINEAR);
+			cv::drawContours(display_img, *contours, -1, Scalar(255, 255, 0), 5);
+			cv::resize(display_img, resized_display_img, Size(width, height), cv::INTER_LINEAR);
 			cv::imshow("Display", resized_display_img);
 			if (cv::waitKey(30) == 27) {
 				*stop = true;
 				break;
 			}
-			cout << "Display thread: " << contours->size() << endl;
 		}
 
 	}
 }
 
-void detect(Mat* frame, int* count, bool* stop, int* x, int* y, int min_area, int max_area) {
+void detect(Mat* frame, int* count, bool* stop, int* x, int* y, int min_area, int max_area, vector<vector <Point>>* contours_shared) {
 	cv::Mat hsv_img, mask1, mask2, mask3;
 	vector<Vec4i> hierarchy;
 	int local_count = 0;
@@ -76,6 +77,7 @@ void detect(Mat* frame, int* count, bool* stop, int* x, int* y, int min_area, in
 		if (local_count < *count - 10) {
 			local_count = *count;
 			vector<vector<Point>> contours;
+			contours_shared->clear();
 			cv::cvtColor(*frame, hsv_img, cv::COLOR_BGR2HSV);
 			// Gen lower mask (0-5) and upper mask (175-180) of RED
 			cv::inRange(hsv_img, cv::Scalar(0, 100, 60), cv::Scalar(35, 255, 255), mask1);
@@ -86,13 +88,14 @@ void detect(Mat* frame, int* count, bool* stop, int* x, int* y, int min_area, in
 			for(size_t i=0; i < contours.size(); i++) {
 				mu[i] = moments( contours[i] );
 			}
-			for (auto m : mu) {
-				if ( (m.m00 > min_area) & (m.m00 < max_area)) {
+			for (size_t i=0; i < mu.size(); i++) {
+				if ((mu[i].m00 > min_area) & (mu[i].m00 < max_area)) {
 					object_count += 1;
-					int cx = (int) (m.m10 / m.m00);
-					int cy = (int) (m.m01 / m.m00);
+					int cx = (int) (mu[i].m10 / mu[i].m00);
+					int cy = (int) (mu[i].m01 / mu[i].m00);
 					x_total += cx;
 					y_total += cy;
+					contours_shared->push_back(contours[i]);
 				}	
 			}
 			if (object_count > 0) {
@@ -154,7 +157,8 @@ int main(int, char**) {
 				&detect_x,
 				&detect_y,
 				config["min_area"].as<int>(),
-				config["max_area"].as<int>());
+				config["max_area"].as<int>(),
+				&contours);
 		threads.push_back(move(t3));
 	}
 	cv::VideoWriter video(config["video_filepath"].as<std::string>(),
