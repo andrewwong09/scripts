@@ -2,6 +2,7 @@
 #include <thread>
 #include <iomanip>
 #include <iostream>
+#include <fstream>
 #include <stdio.h>
 #include <signal.h>
 #include <assert.h>
@@ -84,7 +85,7 @@ void detect(Mat* frame, int* count, bool* stop, int fps, int* x, int* y, int min
 			contours_shared->clear();
 			cv::cvtColor(*frame, hsv_img, cv::COLOR_BGR2HSV);
 			// Gen lower mask (0-5) and upper mask (175-180) of RED
-			cv::inRange(hsv_img, cv::Scalar(0, 150, 20), cv::Scalar(10, 255, 255), mask1);
+			cv::inRange(hsv_img, cv::Scalar(0, 150, 20), cv::Scalar(5, 255, 255), mask1);
 			cv::inRange(hsv_img, cv::Scalar(170, 150, 20), cv::Scalar(180, 255, 255), mask2);
 			cv::bitwise_or(mask1, mask2, mask3);
 			cv::findContours(mask3, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_NONE);
@@ -111,7 +112,6 @@ void detect(Mat* frame, int* count, bool* stop, int fps, int* x, int* y, int min
 			}
 		}
 		usleep(sleep_us);
-
 	}  // end while
 }
 
@@ -122,12 +122,14 @@ void my_handler(int s){
 
 int main(int, char**) {
 	Mat frame;
+	ofstream timestamp_file;
 	int shared_count = 0;
 	int count = 0;
 	int detect_x = 0;
 	int detect_y = 42;
 	vector<vector<Point>> contours;
 	YAML::Node config = YAML::LoadFile("config.yaml");
+	timestamp_file.open("output.txt");
 	signal (SIGINT, my_handler);
 	std::vector<std::thread> threads;
 	std::thread t1 (cap_read,
@@ -193,6 +195,8 @@ int main(int, char**) {
 				beginning = stop;
 			}
 			cout << i << ": " << duration.count() << " μS / " << fps << " fps, " << detect_x << ", " << detect_y << endl;
+			uint64_t us_since_epoch = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+			timestamp_file << i << ": " << us_since_epoch << "," << endl;
 			start = stop;
 		} else {
 			i--;
@@ -206,6 +210,7 @@ int main(int, char**) {
 		th.join();
 	}
 	video.release();
+	timestamp_file.close();
 	printf("Main: Video Released\n");
 	return 0;
 }
