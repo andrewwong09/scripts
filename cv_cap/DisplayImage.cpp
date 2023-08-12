@@ -45,43 +45,47 @@ void cap_read(Mat* frame, int* count, bool* stop, int e_time, int width,
 	cap.release();
 }
 
-void display(Mat* frame, int* count, bool* stop, int width, int height, vector<vector<Point>>* contours) {
+void display(Mat* frame, int* count, bool* stop, int fps, int width, int height, 
+		vector<vector<Point>>* contours) {
 	int local_count = 0;
-
+	int sleep_us = (int) (1e6 / fps / 2);
 	cv::namedWindow("Display", WINDOW_AUTOSIZE);
 	while(!*stop) {
 		if (local_count != *count) {
+			local_count = *count;
 			cv::Mat display_img = frame->clone();
 			cv::Mat resized_display_img;
-			local_count = *count;
-			cv::drawContours(display_img, *contours, -1, Scalar(255, 255, 0), 5);
-			cv::resize(display_img, resized_display_img, Size(width, height), cv::INTER_LINEAR);
+			cv::drawContours(display_img, *contours, -1, cv::Scalar(255, 255, 0), 5);
+			cv::resize(display_img, resized_display_img, cv::Size(width, height), cv::INTER_LINEAR);
 			cv::imshow("Display", resized_display_img);
 			if (cv::waitKey(30) == 27) {
 				*stop = true;
 				break;
 			}
 		}
-
+		usleep(sleep_us);
 	}
 }
 
-void detect(Mat* frame, int* count, bool* stop, int* x, int* y, int min_area, int max_area, vector<vector <Point>>* contours_shared) {
+void detect(Mat* frame, int* count, bool* stop, int fps, int* x, int* y, int min_area, int max_area,
+		vector<vector <Point>>* contours_shared) {
 	cv::Mat hsv_img, mask1, mask2, mask3;
 	vector<Vec4i> hierarchy;
+	int skip_num = 10;
+	int sleep_us = (int) (1e6 / fps / 3 / skip_num);
 	int local_count = 0;
 	while(!*stop) {
 		int x_total = 0;
 		int y_total = 0;
 		int object_count = 0;
-		if (local_count < *count - 10) {
+		if (local_count < *count - skip_num) {
 			local_count = *count;
 			vector<vector<Point>> contours;
 			contours_shared->clear();
 			cv::cvtColor(*frame, hsv_img, cv::COLOR_BGR2HSV);
 			// Gen lower mask (0-5) and upper mask (175-180) of RED
-			cv::inRange(hsv_img, cv::Scalar(0, 100, 60), cv::Scalar(35, 255, 255), mask1);
-			cv::inRange(hsv_img, cv::Scalar(170, 100, 60), cv::Scalar(180, 255, 255), mask2);
+			cv::inRange(hsv_img, cv::Scalar(0, 150, 20), cv::Scalar(10, 255, 255), mask1);
+			cv::inRange(hsv_img, cv::Scalar(170, 150, 20), cv::Scalar(180, 255, 255), mask2);
 			cv::bitwise_or(mask1, mask2, mask3);
 			cv::findContours(mask3, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_NONE);
 			vector<cv::Moments> mu(contours.size());
@@ -106,8 +110,9 @@ void detect(Mat* frame, int* count, bool* stop, int* x, int* y, int min_area, in
 				*y = -1;
 			}
 		}
+		usleep(sleep_us);
 
-	}
+	}  // end while
 }
 
 void my_handler(int s){
@@ -144,6 +149,7 @@ int main(int, char**) {
 				&frame,
 				&shared_count,
 				&stop,
+				config["framerate"].as<int>(),
 				(int) config["width"].as<int>() / scale,
 				(int) config["height"].as<int>() / scale,
 				&contours);
@@ -154,6 +160,7 @@ int main(int, char**) {
 				&frame,
 				&shared_count,
 				&stop,
+				config["framerate"].as<int>(),
 				&detect_x,
 				&detect_y,
 				config["min_area"].as<int>(),
