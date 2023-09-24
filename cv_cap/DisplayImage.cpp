@@ -1,4 +1,5 @@
 #include <chrono>
+#include <ctime>
 #include <thread>
 #include <iomanip>
 #include <iostream>
@@ -120,6 +121,17 @@ void my_handler(int s){
     stop = true;
 }
 
+std::string get_dt_str(void) {
+    std::time_t currentTime = std::time(nullptr);
+    std::tm* timeInfo = std::localtime(&currentTime);
+    char buffer[80]; // Buffer to store the formatted date and time
+    std::strftime(buffer, sizeof(buffer), "%Y-%m-%d_%H-%M-%S", timeInfo);
+
+    std::string dateTimeString(buffer);
+    dateTimeString += ".mp4";
+    return dateTimeString;
+}
+
 int main(int, char**) {
     Mat frame;
     ofstream timestamp_file;
@@ -129,7 +141,8 @@ int main(int, char**) {
     int detect_y = 42;
     vector<vector<Point>> contours;
     YAML::Node config = YAML::LoadFile("config.yaml");
-    timestamp_file.open("output.txt");
+
+    timestamp_file.open(get_dt_str());
     signal (SIGINT, my_handler);
     std::vector<std::thread> threads;
     std::thread t1 (cap_read,
