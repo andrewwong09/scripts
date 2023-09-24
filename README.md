@@ -4,7 +4,7 @@ General scripts for my machines.
 ### Launching GST
 Clone tiscamera into **$HOME/scratch/** and build.
 ```
-git clone git@github.com:TheImagingSource/tiscamera.git
+git clone https://github.com/TheImagingSource/tiscamera.git
 cd tiscamera
 # only works on Debian based systems like Ubuntu
 sudo ./scripts/dependency-manager install
