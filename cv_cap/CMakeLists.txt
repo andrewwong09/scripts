@@ -5,7 +5,11 @@ find_package( OpenCV REQUIRED )
 find_package(PkgConfig)
 pkg_check_modules(YAMLCPP REQUIRED yaml-cpp>=0.5)
 include_directories(${OpenCV_INCLUDE_DIRS} ${YAMLCPP_INCLUDE_DIRS})
+
 add_executable(DisplayImage DisplayImage.cpp)
 add_executable(Detect detect.cpp)
+add_executable(test_serial test_serial.cpp)
+
 target_link_libraries(DisplayImage ${OpenCV_LIBS} ${YAMLCPP_LIBRARIES})
 target_link_libraries(Detect ${OpenCV_LIBS} ${YAMLCPP_LIBRARIES})
+target_link_libraries(test_serial ${YAMLCPP_LIBRARIES})
