@@ -5,7 +5,8 @@ int pan_ena_pin = 7;
 int pan_dir_pin = 8;
 int pan_pul_pin = 9;
 
-const int pulse_delay = 30;
+const int pulse_delay = 10;
+unsigned int num_commands = 0;
 
 struct motion_cmd {
     int axis, dir_pin, direction, num_pulses;
@@ -74,6 +75,8 @@ void loop() {
   motion_cmd cmd = get_command();
   if (cmd.axis != -1) {
     drive(cmd.axis, cmd.dir_pin, cmd.direction, cmd.num_pulses);
+    num_commands += 1;
+    Serial.println("Done: " + String(num_commands));
   }
   digitalWrite(LED_BUILTIN, LOW);
 }
