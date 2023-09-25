@@ -121,14 +121,14 @@ void my_handler(int s){
     stop = true;
 }
 
-std::string get_dt_str(void) {
+std::string get_dt_str(std::string ext) {
     std::time_t currentTime = std::time(nullptr);
     std::tm* timeInfo = std::localtime(&currentTime);
     char buffer[80]; // Buffer to store the formatted date and time
     std::strftime(buffer, sizeof(buffer), "%Y-%m-%d_%H-%M-%S", timeInfo);
 
     std::string dateTimeString(buffer);
-    dateTimeString += ".mp4";
+    dateTimeString += ext;
     return dateTimeString;
 }
 
@@ -142,7 +142,7 @@ int main(int, char**) {
     vector<vector<Point>> contours;
     YAML::Node config = YAML::LoadFile("config.yaml");
 
-    timestamp_file.open(get_dt_str());
+    timestamp_file.open(get_dt_str(".txt"));
     signal (SIGINT, my_handler);
     std::vector<std::thread> threads;
     std::thread t1 (cap_read,
@@ -183,7 +183,7 @@ int main(int, char**) {
                 &contours);
         threads.push_back(move(t3));
     }
-    cv::VideoWriter video(config["video_filepath"].as<std::string>(),
+    cv::VideoWriter video(get_dt_str(".mp4"),
             cv::VideoWriter::fourcc('a', 'v', 'c', '1'),
             config["emperical_framerate"].as<double>(),
             cv::Size(config["width"].as<int>(), config["height"].as<int>()),

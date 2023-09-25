@@ -1,5 +1,5 @@
 display: true
-display_down_scale: 3
+display_down_scale: 5
 width: 3072
 height: 2048
 gain: 20
@@ -10,4 +10,3 @@ ExposureTime_us: 10000
 detect: true
 min_area: 2000
 max_area: 3000
-video_filepath: "./output.mp4"
