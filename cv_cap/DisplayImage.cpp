@@ -22,12 +22,17 @@ bool stop = false;
 
 void cap_read(Mat* frame, int* count, bool* stop, int e_time, int width, 
         int height, int gain, int serial_num, int framerate) {
+    char gain_str[100];
     char gst_launch_str[500];
+    if (gain < 0) {
+	sprintf(gain_str, "GainAuto=On");
+    } else {
+	sprintf(gain_str, "GainAuto=Off,Gain=%d", gain);
+    }
     sprintf(gst_launch_str,
-            "tcambin tcam-properties=tcam,ExposureAuto=Off,GainAuto=Off,"
-            "serial=%d,ExposureTime=%d,Gain=%d"
+            "tcambin tcam-properties=tcam,serial=%d,ExposureAuto=Off,ExposureTime=%d,%s"
             " ! video/x-raw,format=BGRx,width=%d,height=%d,framerate=%d/1"
-            " ! timeoverlay ! appsink", serial_num, e_time, gain, width, height, framerate
+            " ! timeoverlay ! appsink", serial_num, e_time, gain_str, width, height, framerate
            );
     printf("%s\n", gst_launch_str);
     cv::VideoCapture cap(gst_launch_str, CAP_GSTREAMER);
