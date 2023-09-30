@@ -21,18 +21,27 @@ using namespace std::chrono;
 bool stop = false;
 
 void cap_read(Mat* frame, int* count, bool* stop, int e_time, int width, 
-        int height, int gain, int serial_num, int framerate) {
+        int height, int gain, int serial_num, int framerate, int binning) {
     char gain_str[100];
+    char exposure_str[100];
     char gst_launch_str[500];
     if (gain < 0) {
 	sprintf(gain_str, "GainAuto=On");
     } else {
 	sprintf(gain_str, "GainAuto=Off,Gain=%d", gain);
     }
+    if (e_time < 0) {
+	sprintf(exposure_str, "ExposureAuto=On");
+    } else {
+	sprintf(exposure_str, "ExposureAuto=Off,ExposureTime=%d", e_time);
+    }
     sprintf(gst_launch_str,
-            "tcambin tcam-properties=tcam,serial=%d,ExposureAuto=Off,ExposureTime=%d,%s"
-            " ! video/x-raw,format=BGRx,width=%d,height=%d,framerate=%d/1"
-            " ! timeoverlay ! appsink", serial_num, e_time, gain_str, width, height, framerate
+            "tcambin tcam-properties=tcam,%s,%s,serial=%d"
+            " ! video/x-raw,format=BGRx,width=%d,height=%d,framerate=%d/1,"
+	    "binning=%dx%d"
+            " ! timeoverlay ! appsink", 
+	    exposure_str, gain_str, serial_num, width, height, framerate,
+	    binning, binning
            );
     printf("%s\n", gst_launch_str);
     cv::VideoCapture cap(gst_launch_str, CAP_GSTREAMER);
@@ -150,16 +159,25 @@ int main(int, char**) {
     timestamp_file.open(get_dt_str(".txt"));
     signal (SIGINT, my_handler);
     std::vector<std::thread> threads;
+
+    int width = config["width"].as<int>();
+    int height = config["height"].as<int>();
+    int binning = config["binning"].as<int>();
+    if (binning > 1) {
+        width = (int) (width / binning);
+	height = (int) (height / binning);
+    }
     std::thread t1 (cap_read,
             &frame, 
             &shared_count,
             &stop,
             config["ExposureTime_us"].as<int>(),
-            config["width"].as<int>(),
-            config["height"].as<int>(),
+            width,
+            height,
             config["gain"].as<int>(),
             config["serial_num"].as<int>(),
-            config["framerate"].as<int>()
+            config["framerate"].as<int>(),
+	    binning
                );
     threads.push_back(move(t1));
     if (config["display"].as<bool>()) {
@@ -191,7 +209,7 @@ int main(int, char**) {
     cv::VideoWriter video(get_dt_str(".mp4"),
             cv::VideoWriter::fourcc('a', 'v', 'c', '1'),
             config["emperical_framerate"].as<double>(),
-            cv::Size(config["width"].as<int>(), config["height"].as<int>()),
+            cv::Size(width, height),
             true);
     auto start = high_resolution_clock::now();
     auto beginning = high_resolution_clock::now();

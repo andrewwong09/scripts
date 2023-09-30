@@ -2,11 +2,12 @@ display: true
 display_down_scale: 5
 width: 3072
 height: 2048
-gain: 20
+binning: 1
+gain: -1
 serial_num: 33120263
-framerate: 60
+framerate: 30
 emperical_framerate: 15
-ExposureTime_us: 10000
-detect: true
+ExposureTime_us: -1
+detect: false
 min_area: 2000
 max_area: 3000
