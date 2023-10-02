@@ -9,7 +9,12 @@ framerate: 30
 emperical_framerate: 15
 ExposureTime_us: -1
 
-detect: false
+detect: true
 port: /dev/ttyACM0
-min_area: 2000
-max_area: 3000
+center_window_px: 200
+pan_limit: 50
+tilt_limit: 50
+tilt_flip: -1
+pan_flip: 1
+min_area: 200
+max_area: 2000

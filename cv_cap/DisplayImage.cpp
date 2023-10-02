@@ -13,6 +13,10 @@
 #include "opencv2/opencv.hpp"
 #include <opencv2/videoio.hpp>
 #include <opencv2/highgui.hpp>
+
+
+#include "serial_com.h"
+
 using namespace cv;
 using namespace std;
 using namespace std::chrono;
@@ -130,6 +134,48 @@ void detect(Mat* frame, int* count, bool* stop, int fps, int* x, int* y, int min
     }  // end while
 }
 
+
+void track(int* x, int* y, int width, int height, int center_window_px, int p_lim, int t_lim, std::string port, bool* stop) {
+	ThreadSafeStringQueue cmd_queue;
+        std::thread t1 (serial_connection, port, std::ref(cmd_queue), stop);
+        usleep(ARDUINO_RESET_TIME);
+	int x_count = 0;
+	int y_count = 0;
+	
+	int window_x_min = (int)((width / 2) - center_window_px);
+	int window_x_max = (int)((width / 2) + center_window_px);
+	int window_y_min = (int)((height / 2) - center_window_px);
+	int window_y_max = (int)((height / 2) + center_window_px);
+
+	while(!*stop) {
+	    std::vector<std::string> commands;	
+	    if (*x > 0 && *y > 0) {
+		if (*x < window_x_min && abs(x_count) < p_lim) {
+		    commands.push_back("p-1");
+		    x_count -= 1;
+		} else if (*x > window_x_max && abs(x_count) < p_lim) {
+		    commands.push_back("p1");
+		    x_count += 1;
+		}
+		if (*y < window_y_min && abs(y_count) < t_lim) {
+		    commands.push_back("t1");
+		    y_count += 1;
+		} else if (*x > window_x_max && abs(y_count) < t_lim) {
+		    commands.push_back("t-1");  // Flipping here because know it's flipped. Make configurable.
+		    y_count -= 1;
+		}
+		for (const std::string& cmd : commands) {
+                    cmd_queue.addString(cmd.c_str());
+		    std::cout << cmd << std::endl;
+		}
+	    } else {
+		usleep(1000);
+	    }
+	}
+        t1.join();
+}
+
+
 void my_handler(int s){
     printf("\nCaught signal %d\n", s);
     stop = true;
@@ -205,6 +251,18 @@ int main(int, char**) {
                 config["max_area"].as<int>(),
                 &contours);
         threads.push_back(move(t3));
+        
+	std::thread t4 (track,
+                &detect_x,
+                &detect_y,
+                config["width"].as<int>(),
+                config["height"].as<int>(),
+                config["center_window_px"].as<int>(),
+                config["pan_limit"].as<int>(),
+                config["tilt_limit"].as<int>(),
+		config["port"].as<std::string>(),
+                &stop);
+        threads.push_back(move(t4));
     }
     cv::VideoWriter video(get_dt_str(".mp4"),
             cv::VideoWriter::fourcc('a', 'v', 'c', '1'),

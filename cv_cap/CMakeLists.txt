@@ -11,6 +11,6 @@ add_executable(Detect detect.cpp)
 add_executable(test_serial test_serial.cpp)
 add_library(serial_com serial_com.cpp)
 
-target_link_libraries(DisplayImage ${OpenCV_LIBS} ${YAMLCPP_LIBRARIES})
+target_link_libraries(DisplayImage serial_com ${OpenCV_LIBS} ${YAMLCPP_LIBRARIES})
 target_link_libraries(Detect ${OpenCV_LIBS} ${YAMLCPP_LIBRARIES})
 target_link_libraries(test_serial serial_com)
