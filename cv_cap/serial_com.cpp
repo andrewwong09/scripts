@@ -42,7 +42,7 @@ int get_response(int serial_fd) {
 }
 
 
-void serial_connection(std::string port) {
+void serial_connection(std::string port, ThreadSafeStringQueue& cmd_queue, bool* stop) {
   std::string serialPort = port;
   int serial_fd = open(serialPort.c_str(), O_WRONLY);
 
@@ -71,17 +71,16 @@ void serial_connection(std::string port) {
 
   // Wait for Arduino to setup; serial connection opened defaults to restarting
   std::cout << "Serial Open. Waiting..." << std::endl;
-  usleep(5 * 1000 * 1000);
+  usleep(ARDUINO_RESET_TIME);
 
   // Send the command string
-  std::string test_commands[6] = {"t50", "t-100", "t50", "p70", "p-140", "p70"};
-  for (int i=0; i < sizeof(test_commands) / sizeof(test_commands[0]); i++) {
-    std::cout << "Sending command: " << test_commands[i] << std::endl;
-    std::string command = test_commands[i];
-    write(serial_fd, command.c_str(), command.length());
-    // Open loop assume all commands done within 4 seconds
-    std::cout << "Sleeping" << std::endl;
-    usleep(3 * 1e6);
+  std::chrono::milliseconds timeout(100);
+  while(!*stop) {
+    std::string cmd = cmd_queue.removeString(timeout);
+    if (cmd != "") {
+	write(serial_fd, cmd.c_str(), cmd.length());
+    	std::cout << "Consumed: " << cmd << std::endl;
+    }
   }
 
   // Close the serial port
