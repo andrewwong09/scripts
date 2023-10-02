@@ -2,12 +2,14 @@ display: true
 display_down_scale: 5
 width: 3072
 height: 2048
-binning: 1
+binning: 2
 gain: -1
 serial_num: 33120263
 framerate: 30
 emperical_framerate: 15
 ExposureTime_us: -1
+
 detect: false
+port: /dev/ttyACM0
 min_area: 2000
 max_area: 3000
