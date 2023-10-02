@@ -137,7 +137,8 @@ void detect(Mat* frame, int* count, bool* stop, int fps, int* x, int* y, int min
 
 void track(int* x, int* y, int width, int height, int center_window_px, int p_lim, int t_lim, std::string port, bool* stop) {
 	ThreadSafeStringQueue cmd_queue;
-        std::thread t1 (serial_connection, port, std::ref(cmd_queue), stop);
+	bool ser_stop = false;
+        std::thread t1 (serial_connection, port, std::ref(cmd_queue), &ser_stop);
         usleep(ARDUINO_RESET_TIME);
 	int x_count = 0;
 	int y_count = 0;
@@ -171,6 +172,9 @@ void track(int* x, int* y, int width, int height, int center_window_px, int p_li
 	    }
 	    usleep(2000000);
 	}
+        cmd_queue.addString("d");
+	usleep(10000);
+	ser_stop = true;
         t1.join();
 }
 
