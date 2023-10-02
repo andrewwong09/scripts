@@ -35,8 +35,6 @@ void drive(int pul_pin, int dir_pin, int dir, int num_pulses) {
     digitalWrite(pul_pin, LOW);
     delay(pulse_delay);
   }
-  digitalWrite(pan_ena_pin, LOW);
-  digitalWrite(tilt_ena_pin, LOW);
 }
 
 motion_cmd get_command(void) {
@@ -57,6 +55,10 @@ motion_cmd get_command(void) {
     } else if (axis == 't') {
       ret_cmd.axis = tilt_pul_pin;
       ret_cmd.dir_pin = tilt_dir_pin;
+    } else if (axis == 'd') {
+      digitalWrite(pan_ena_pin, LOW);
+      digitalWrite(tilt_ena_pin, LOW);
+      return ret_cmd;
     } else {
       return ret_cmd;
     }
