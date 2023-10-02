@@ -251,7 +251,8 @@ int main(int, char**) {
                 config["max_area"].as<int>(),
                 &contours);
         threads.push_back(move(t3));
-        
+    }
+    if (config["track"] .as<bool>()) {   
 	std::thread t4 (track,
                 &detect_x,
                 &detect_y,
