@@ -104,8 +104,8 @@ void detect(Mat* frame, int* count, bool* stop, int fps, int* x, int* y, int min
             contours_shared->clear();
             cv::cvtColor(*frame, hsv_img, cv::COLOR_BGR2HSV);
             // Gen lower mask (0-5) and upper mask (175-180) of RED
-            cv::inRange(hsv_img, cv::Scalar(0, 150, 20), cv::Scalar(5, 255, 255), mask1);
-            cv::inRange(hsv_img, cv::Scalar(170, 150, 20), cv::Scalar(180, 255, 255), mask2);
+            cv::inRange(hsv_img, cv::Scalar(0, 150, 100), cv::Scalar(25, 255, 255), mask1);
+            cv::inRange(hsv_img, cv::Scalar(160, 150, 100), cv::Scalar(180, 255, 255), mask2);
             cv::bitwise_or(mask1, mask2, mask3);
             cv::findContours(mask3, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_NONE);
             vector<cv::Moments> mu(contours.size());
@@ -144,33 +144,32 @@ void track(int* x, int* y, int width, int height, int center_window_px, int p_li
 	
 	int window_x_min = (int)((width / 2) - center_window_px);
 	int window_x_max = (int)((width / 2) + center_window_px);
-	int window_y_min = (int)((height / 2) - center_window_px);
-	int window_y_max = (int)((height / 2) + center_window_px);
+	int window_y_min = (int)((height / 2) - center_window_px / 2);
+	int window_y_max = (int)((height / 2) + center_window_px / 2);
 
 	while(!*stop) {
 	    std::vector<std::string> commands;	
 	    if (*x > 0 && *y > 0) {
 		if (*x < window_x_min && abs(x_count) < p_lim) {
-		    commands.push_back("p-1");
+		    commands.push_back("p-2");
 		    x_count -= 1;
 		} else if (*x > window_x_max && abs(x_count) < p_lim) {
-		    commands.push_back("p1");
+		    commands.push_back("p2");
 		    x_count += 1;
 		}
 		if (*y < window_y_min && abs(y_count) < t_lim) {
-		    commands.push_back("t1");
-		    y_count += 1;
-		} else if (*x > window_x_max && abs(y_count) < t_lim) {
-		    commands.push_back("t-1");  // Flipping here because know it's flipped. Make configurable.
+		    commands.push_back("t-6");
 		    y_count -= 1;
+		} else if (*y > window_y_max && abs(y_count) < t_lim) {
+		    commands.push_back("t6");  // Flipping here because know it's flipped. Make configurable.
+		    y_count += 1;
 		}
 		for (const std::string& cmd : commands) {
                     cmd_queue.addString(cmd.c_str());
 		    std::cout << cmd << std::endl;
 		}
-	    } else {
-		usleep(1000);
 	    }
+	    usleep(2000000);
 	}
         t1.join();
 }
@@ -256,8 +255,8 @@ int main(int, char**) {
 	std::thread t4 (track,
                 &detect_x,
                 &detect_y,
-                config["width"].as<int>(),
-                config["height"].as<int>(),
+                width,
+                height,
                 config["center_window_px"].as<int>(),
                 config["pan_limit"].as<int>(),
                 config["tilt_limit"].as<int>(),

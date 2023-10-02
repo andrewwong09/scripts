@@ -80,6 +80,7 @@ void serial_connection(std::string port, ThreadSafeStringQueue& cmd_queue, bool*
     if (cmd != "") {
 	write(serial_fd, cmd.c_str(), cmd.length());
     	std::cout << "Consumed: " << cmd << std::endl;
+	usleep(100000);
     }
   }
 

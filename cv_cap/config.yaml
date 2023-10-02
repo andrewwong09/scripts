@@ -10,10 +10,10 @@ emperical_framerate: 15
 ExposureTime_us: -1
 
 detect: true
-min_area: 200
-max_area: 2000
+min_area: 100
+max_area: 8000
 
-track: false
+track: true
 port: /dev/ttyACM0
 center_window_px: 200
 pan_limit: 50
