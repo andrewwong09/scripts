@@ -23,9 +23,9 @@ disable_lid_switch() {
 no_args="true"
 while getopts "de" flag; do
   case ${flag} in
-    d) disable_lid_swtich
+    d) disable_lid_switch
         ;;
-    e) enable_lid_swtich
+    e) enable_lid_switch
         ;;
     *) print_usage
       exit 1 ;;
